@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional, List, Dict, Union
+from typing import Optional, List, Dict, Union, Any
 
 from services.external_api.client import RetryConfig, BadRequest as BadRequestError
 from starkware.starknet.definitions.fields import ContractAddressSalt
@@ -12,6 +12,7 @@ from starkware.starknet.services.api.feeder_gateway.feeder_gateway_client import
 )
 from starkware.starknet.services.api.feeder_gateway.response_objects import (
     StarknetBlock,
+    TransactionReceipt,
 )
 from starkware.starknet.services.api.gateway.gateway_client import GatewayClient
 from starkware.starkware_utils.error_handling import StarkErrorCode
@@ -164,7 +165,9 @@ class Client:
         """
         return await self._feeder_gateway.get_transaction(tx_hash)
 
-    async def get_transaction_receipt(self, tx_hash: CastableToHash) -> JsonObject:
+    async def get_transaction_receipt(
+        self, tx_hash: CastableToHash
+    ) -> TransactionReceipt:
         """
         :param tx_hash: Transaction's hash
         :return: Dictionary representing JSON of the transaction's receipt on Starknet
@@ -261,3 +264,21 @@ class Client:
             raise Exception("Transaction not received")
 
         return res
+
+    async def get_class_hash_at(
+        self,
+        contract_address: CastableToHash,
+        block_hash: Optional[CastableToHash] = None,
+        block_number: Optional[BlockIdentifier] = None,
+    ) -> str:
+        return await self._feeder_gateway.get_class_hash_at(
+            block_hash=block_hash,
+            block_number=block_number,
+            contract_address=contract_address,
+        )
+
+    async def get_class_by_hash(self, class_hash: CastableToHash) -> Dict[str, Any]:
+        if isinstance(class_hash, int):
+            class_hash = hex(class_hash)
+
+        return await self._feeder_gateway.get_class_by_hash(class_hash=class_hash)
